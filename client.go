@@ -100,11 +100,15 @@ func (c *Client) GetNoticesSince(nation string, from int) ([]Notice, error) {
 	return n.Notices, nil
 }
 
-func (c *Client) AnswerIssue(nation string, issue, option int) error {
-	_, err := c.do(map[string]interface{}{
+func (c *Client) AnswerIssue(nation string, issue, option int) (Consequences, error) {
+	n, err := c.do(map[string]interface{}{
 		"nation": nation,
+		"c":      "issue",
 		"issue":  issue,
 		"option": option,
 	})
-	return err
+	if err != nil {
+		return Consequences{}, err
+	}
+	return n.Consequences, nil
 }

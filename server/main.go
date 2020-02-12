@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/yi-jiayu/nationstates"
 )
@@ -148,17 +150,45 @@ func sendIssue(token string, chatID int, notice nationstates.Notice, issues []na
 		return err
 	}
 	for _, option := range issue.Options {
-		err := sendMessageWithInlineKeyboard(token, chatID, option.Text, [][]InlineKeyboardButton{
+		data, err := json.Marshal(CallbackData{
+			Action:   "answerIssue",
+			IssueID:  issue.ID,
+			OptionID: option.ID,
+		})
+		if err != nil {
+			return err
+		}
+		err = sendMessageWithInlineKeyboard(token, chatID, option.Text, [][]InlineKeyboardButton{
 			{
 				InlineKeyboardButton{
 					Text:         "Accept",
-					CallbackData: fmt.Sprintf("answerIssue,%d,%d", issue.ID, option.ID),
+					CallbackData: string(data),
 				},
 			},
 		})
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func answerCallbackQuery(token, id string) error {
+	u := fmt.Sprintf("https://api.telegram.org/bot%s/answerCallbackQuery", token)
+	params := url.Values{}
+	params.Add("callback_query_id", id)
+	res, err := http.PostForm(u, params)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	var tgRes TelegramResponse
+	err = json.NewDecoder(res.Body).Decode(&tgRes)
+	if err != nil {
+		return err
+	}
+	if !tgRes.Ok {
+		return errors.New(tgRes.Description)
 	}
 	return nil
 }
@@ -195,6 +225,59 @@ func getConfig() (Config, error) {
 	return config, nil
 }
 
+type Update struct {
+	CallbackQuery *CallbackQuery `json:"callback_query"`
+}
+
+type CallbackQuery struct {
+	ID   string `json:"id"`
+	Data string `json:"data"`
+}
+
+type CallbackData struct {
+	Action   string `json:"a"`
+	IssueID  int    `json:"iid"`
+	OptionID int    `json:"oid"`
+}
+
+func newUpdateHandler(client *nationstates.Client, nation, token string, chatID int) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var u Update
+		err := json.NewDecoder(r.Body).Decode(&u)
+		if err != nil {
+			return
+		}
+		callbackQuery := u.CallbackQuery
+		if callbackQuery == nil {
+			return
+		}
+		var d CallbackData
+		err = json.Unmarshal([]byte(callbackQuery.Data), &d)
+		if err != nil {
+			return
+		}
+		switch d.Action {
+		case "answerIssue":
+			conseq, err := client.AnswerIssue(nation, d.IssueID, d.OptionID)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			talkingPoint := []rune(conseq.Desc)
+			talkingPoint[0] = unicode.ToUpper(talkingPoint[0])
+			headlines := strings.Join(conseq.Headlines, "\n")
+			err = sendMessage(token, chatID, fmt.Sprintf("*The Talking Point*\n%s.\n\n*Recent Headlines*\n%s", string(talkingPoint), headlines))
+			if err != nil {
+				log.Println(err)
+			}
+			err = answerCallbackQuery(token, callbackQuery.ID)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+}
+
 func main() {
 	config, err := getConfig()
 	if err != nil {
@@ -211,4 +294,5 @@ func main() {
 		Callback:         newCallback(config.Token, config.ChatID),
 	}
 	go notifier.Start()
+	http.ListenAndServe(":8080", http.HandlerFunc(newUpdateHandler(client, config.Nation, config.Token, config.ChatID)))
 }
