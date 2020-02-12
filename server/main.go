@@ -263,10 +263,16 @@ func newUpdateHandler(client *nationstates.Client, nation, token string, chatID 
 				log.Println(err)
 				return
 			}
-			talkingPoint := []rune(conseq.Desc)
-			talkingPoint[0] = unicode.ToUpper(talkingPoint[0])
-			headlines := strings.Join(conseq.Headlines, "\n")
-			err = sendMessage(token, chatID, fmt.Sprintf("*The Talking Point*\n%s.\n\n*Recent Headlines*\n%s", string(talkingPoint), headlines))
+			var text string
+			if conseq.Error != "" {
+				text = conseq.Error
+			} else {
+				talkingPoint := []rune(conseq.Desc)
+				talkingPoint[0] = unicode.ToUpper(talkingPoint[0])
+				headlines := strings.Join(conseq.Headlines, "\n")
+				text = fmt.Sprintf("*The Talking Point*\n%s.\n\n*Recent Headlines*\n%s", string(talkingPoint), headlines)
+			}
+			err = sendMessage(token, chatID, text)
 			if err != nil {
 				log.Println(err)
 			}

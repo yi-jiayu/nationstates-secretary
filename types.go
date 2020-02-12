@@ -42,6 +42,8 @@ type Consequences struct {
 	Desc      string   `xml:"DESC"`
 	Rankings  []Rank   `xml:"RANKINGS>RANK"`
 	Headlines []string `xml:"HEADLINES>HEADLINE"`
+
+	Error string `xml:"ERROR"`
 }
 
 type Rank struct {
