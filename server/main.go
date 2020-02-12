@@ -17,15 +17,36 @@ import (
 	"github.com/yi-jiayu/nationstates"
 )
 
+type Offsetter interface {
+	Offset() int
+	SetOffset(offset int)
+}
+
+type InMemoryOffsetter struct {
+	offset int
+}
+
+func NewInMemoryOffsetter(offset int) *InMemoryOffsetter {
+	return &InMemoryOffsetter{offset: offset}
+}
+
+func (o *InMemoryOffsetter) Offset() int {
+	return o.offset
+}
+
+func (o *InMemoryOffsetter) SetOffset(offset int) {
+	o.offset = offset
+}
+
 type Notifier struct {
 	PollInterval     time.Duration
 	Client           *nationstates.Client
 	Nation           string
 	AdditionalShards []string
 	Callback         func(notice nationstates.Notice, nation nationstates.Nation)
+	Offsetter        Offsetter
 
-	ticker     *time.Ticker
-	lastOffset int
+	ticker *time.Ticker
 }
 
 type SendMessageRequest struct {
@@ -52,13 +73,13 @@ type TelegramResponse struct {
 
 func (n Notifier) poll() {
 	log.Println("polling for notices")
-	nation, err := n.Client.GetNation(n.Nation, append(n.AdditionalShards, "notices"), map[string]interface{}{"from": n.lastOffset})
+	nation, err := n.Client.GetNation(n.Nation, append(n.AdditionalShards, "notices"), map[string]interface{}{"from": n.Offsetter.Offset()})
 	if err != nil {
 		return
 	}
 	if notices := nation.Notices; len(notices) > 0 {
 		log.Printf("got %d new notices\n", len(notices))
-		n.lastOffset = notices[0].Timestamp
+		n.Offsetter.SetOffset(notices[0].Timestamp + 1)
 		for i := 0; i < len(notices); i++ {
 			n.Callback(notices[len(notices)-i-1], nation)
 		}
@@ -316,11 +337,12 @@ func main() {
 		Autologin: config.Autologin,
 	}
 	notifier := Notifier{
-		PollInterval:     time.Hour,
+		PollInterval:     time.Minute,
 		Client:           client,
 		Nation:           config.Nation,
 		AdditionalShards: []string{"issues"},
 		Callback:         newCallback(config.Token, config.ChatID),
+		Offsetter:        NewInMemoryOffsetter(0),
 	}
 	go notifier.Start()
 	http.ListenAndServe(":8080", http.HandlerFunc(newUpdateHandler(client, config.Nation, config.Token, config.ChatID)))
