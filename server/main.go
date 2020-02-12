@@ -201,6 +201,12 @@ func newCallback(token string, chatID int) func(notice nationstates.Notice, nati
 			if err != nil {
 				log.Println(err)
 			}
+		case nationstates.NoticeRank:
+			text := fmt.Sprintf("%s %s", notice.Who, notice.Text)
+			err := sendMessage(token, chatID, text)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 }
