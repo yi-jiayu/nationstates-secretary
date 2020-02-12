@@ -145,7 +145,16 @@ func sendIssue(token string, chatID int, notice nationstates.Notice, issues []na
 		return nil
 	}
 	issue := issues[index]
-	err := sendMessage(token, chatID, fmt.Sprintf("*New Issue: %s*\n%s", issue.Title, issue.Text))
+	text := fmt.Sprintf("*New Issue: %s*\n%s", issue.Title, issue.Text)
+	u := "https://www.nationstates.net/" + notice.URL
+	err := sendMessageWithInlineKeyboard(token, chatID, text, [][]InlineKeyboardButton{
+		{
+			InlineKeyboardButton{
+				Text: "View on NationStates",
+				URL:  u,
+			},
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -203,7 +212,15 @@ func newCallback(token string, chatID int) func(notice nationstates.Notice, nati
 			}
 		case nationstates.NoticeRank:
 			text := fmt.Sprintf("%s %s", notice.Who, notice.Text)
-			err := sendMessage(token, chatID, text)
+			u := "https://www.nationstates.net/" + notice.URL
+			err := sendMessageWithInlineKeyboard(token, chatID, text, [][]InlineKeyboardButton{
+				{
+					InlineKeyboardButton{
+						Text: "View on NationStates",
+						URL:  u,
+					},
+				},
+			})
 			if err != nil {
 				log.Println(err)
 			}
