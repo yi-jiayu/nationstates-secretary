@@ -14,7 +14,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/yi-jiayu/nationstates"
+	"github.com/yi-jiayu/nationstates-secretary/nationstates"
 )
 
 type Offsetter interface {
