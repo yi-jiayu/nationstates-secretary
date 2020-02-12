@@ -345,5 +345,5 @@ func main() {
 		Offsetter:        NewInMemoryOffsetter(0),
 	}
 	go notifier.Start()
-	http.ListenAndServe(":8080", http.HandlerFunc(newUpdateHandler(client, config.Nation, config.Token, config.ChatID)))
+	log.Fatal(http.ListenAndServe(":8080", http.HandlerFunc(newUpdateHandler(client, config.Nation, config.Token, config.ChatID))))
 }
