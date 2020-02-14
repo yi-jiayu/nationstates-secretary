@@ -337,7 +337,7 @@ func main() {
 		Autologin: config.Autologin,
 	}
 	notifier := Notifier{
-		PollInterval:     time.Minute,
+		PollInterval:     time.Hour,
 		Client:           client,
 		Nation:           config.Nation,
 		AdditionalShards: []string{"issues"},
