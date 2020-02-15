@@ -130,7 +130,7 @@ func sendMessage(token string, chatID int, text string) error {
 	return SendMessageRequest{
 		ChatID:    chatID,
 		Text:      text,
-		ParseMode: "Markdown",
+		ParseMode: "HTML",
 	}.Do(token)
 }
 
@@ -142,7 +142,7 @@ func sendMessageWithInlineKeyboard(token string, chatID int, text string, button
 	return SendMessageRequest{
 		ChatID:      chatID,
 		Text:        text,
-		ParseMode:   "Markdown",
+		ParseMode:   "HTML",
 		ReplyMarkup: string(replyMarkup),
 	}.Do(token)
 }
@@ -168,7 +168,7 @@ func sendIssue(token string, chatID int, notice nationstates.Notice, issues []na
 		return nil
 	}
 	issue := issues[index]
-	text := fmt.Sprintf("*New Issue: %s*\n%s", issue.Title, issue.Text)
+	text := fmt.Sprintf("<strong>New Issue: %s</strong>\n%s", issue.Title, issue.Text)
 	u := "https://www.nationstates.net/" + notice.URL
 	err := sendMessageWithInlineKeyboard(token, chatID, text, [][]InlineKeyboardButton{
 		{
@@ -234,7 +234,7 @@ func newCallback(token string, chatID int) func(notice nationstates.Notice, nati
 				log.Println(err)
 			}
 		default:
-			text := fmt.Sprintf("*%s*\n%s %s", notice.Title, notice.Who, notice.Text)
+			text := fmt.Sprintf("<strong>%s</strong>\n%s %s", notice.Title, notice.Who, notice.Text)
 			u := "https://www.nationstates.net/" + notice.URL
 			err := sendMessageWithInlineKeyboard(token, chatID, text, [][]InlineKeyboardButton{
 				{
@@ -331,13 +331,13 @@ func newUpdateHandler(client *nationstates.Client, nation, token string, chatID 
 					trends = append(trends, fmt.Sprintf("%s %s: %.2f%%", direction, nationstates.CensusLabels[ranking.ID], ranking.PChange))
 				}
 				recentTrends := strings.Join(trends, "\n")
-				text = fmt.Sprintf(`*The Talking Point*
+				text = fmt.Sprintf(`<strong>The Talking Point</strong>
 %s.
 
-*Recent Headlines*
+<strong>Recent Headlines</strong>
 %s
 
-*Recent trends*
+<strong>Recent trends</strong>
 %s`, string(talkingPoint), headlines, recentTrends)
 			}
 			err = sendMessage(token, chatID, text)
