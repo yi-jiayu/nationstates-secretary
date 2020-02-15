@@ -221,6 +221,7 @@ type Consequences struct {
 }
 
 type Rank struct {
+	ID      int     `xml:"id,attr"`
 	Score   float32 `xml:"SCORE"`
 	Change  float32 `xml:"CHANGE"`
 	PChange float32 `xml:"PCHANGE"`
