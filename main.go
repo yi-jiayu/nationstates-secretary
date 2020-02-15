@@ -233,8 +233,8 @@ func newCallback(token string, chatID int) func(notice nationstates.Notice, nati
 			if err != nil {
 				log.Println(err)
 			}
-		case nationstates.NoticeRank:
-			text := fmt.Sprintf("%s %s", notice.Who, notice.Text)
+		default:
+			text := fmt.Sprintf("*%s*\n%s %s", notice.Title, notice.Who, notice.Text)
 			u := "https://www.nationstates.net/" + notice.URL
 			err := sendMessageWithInlineKeyboard(token, chatID, text, [][]InlineKeyboardButton{
 				{
