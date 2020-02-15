@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -314,7 +316,29 @@ func newUpdateHandler(client *nationstates.Client, nation, token string, chatID 
 				talkingPoint := []rune(conseq.Desc)
 				talkingPoint[0] = unicode.ToUpper(talkingPoint[0])
 				headlines := strings.Join(conseq.Headlines, "\n")
-				text = fmt.Sprintf("*The Talking Point*\n%s.\n\n*Recent Headlines*\n%s", string(talkingPoint), headlines)
+				rankings := conseq.Rankings
+				sort.Slice(rankings, func(i, j int) bool {
+					return math.Abs(float64(rankings[i].PChange)) > math.Abs(float64(rankings[j].PChange))
+				})
+				var trends []string
+				for _, ranking := range rankings {
+					var direction string
+					if ranking.PChange > 0 {
+						direction = "📈"
+					} else {
+						direction = "📉"
+					}
+					trends = append(trends, fmt.Sprintf("%s %s: %.2f%%", direction, nationstates.CensusLabels[ranking.ID], ranking.PChange))
+				}
+				recentTrends := strings.Join(trends, "\n")
+				text = fmt.Sprintf(`*The Talking Point*
+%s.
+
+*Recent Headlines*
+%s
+
+*Recent trends*
+%s`, string(talkingPoint), headlines, recentTrends)
 			}
 			err = sendMessage(token, chatID, text)
 			if err != nil {
