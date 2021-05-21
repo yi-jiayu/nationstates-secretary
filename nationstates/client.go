@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -33,11 +33,11 @@ func (c *Client) do(options map[string]interface{}) (Nation, error) {
 	if pin := c.Pin; pin != "" {
 		req.Header.Set("X-Pin", pin)
 	}
-	params := url.Values{}
+	var params []string
 	for k, v := range options {
-		params.Set(k, fmt.Sprint(v))
+		params = append(params, fmt.Sprintf("%v=%v", k, v))
 	}
-	req.URL.RawQuery = params.Encode()
+	req.URL.RawQuery = strings.Join(params, "&")
 	client := http.DefaultClient
 	if c.client != nil {
 		client = c.client
@@ -111,4 +111,41 @@ func (c *Client) AnswerIssue(nation string, issue, option int) (Consequences, er
 		return Consequences{}, err
 	}
 	return n.Consequences, nil
+}
+
+// CreateCensusShard creates a shard to query the census.
+// scales takes:
+// - a list of scale IDs to select which scales to query.
+// - "all" to retrieve all scales.
+// - nil to retreive the daily World Census scale.
+// modes takes:
+// - a list of modes to select which stats to return.
+// - a map of from and to times in int64 UNIX format to retrieve a history of points.
+// - nil to retrieve the score, rank and regional rank.
+func (c *Client) CreateCensusShard(scales interface{}, modes interface{}) string {
+	shard := []string{"census"}
+
+	switch v := scales.(type) {
+	case []int:
+		var scales []string
+		for _, scale := range v {
+			scales = append(scales, strconv.Itoa(scale))
+		}
+		shard = append(shard, fmt.Sprintf("scale=%s", strings.Join(scales, "+")))
+	case string:
+		shard = append(shard, fmt.Sprintf("scale=%s", v))
+	case nil:
+		fmt.Printf("Nil: %v\n", v)
+	default:
+		fmt.Printf("Default: %v\n", v)
+	}
+
+	switch v := modes.(type) {
+	case []string:
+		shard = append(shard, fmt.Sprintf("mode=%s", strings.Join(v, "+")))
+	case map[string]int64:
+		shard = append(shard, "mode=history", fmt.Sprintf("from=%v", v["from"]), fmt.Sprintf("to=%v", v["to"]))
+	}
+
+	return strings.Join(shard, ";")
 }

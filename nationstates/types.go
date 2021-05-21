@@ -204,6 +204,7 @@ type Nation struct {
 	Issues        []Issue      `xml:"ISSUES>ISSUE"`
 	Notices       []Notice     `xml:"NOTICES>NOTICE"`
 	NextIssueTime int64        `xml:"NEXTISSUETIME"`
+	Scales        []Scale      `xml:"CENSUS>SCALE"`
 }
 
 type Issue struct {
@@ -240,4 +241,19 @@ type Notice struct {
 	Who       string `xml:"WHO"`
 	URL       string `xml:"URL"`
 	Type      string `xml:"TYPE"`
+}
+
+type Scale struct {
+	ID     int     `xml:"id,attr"`
+	Score  float32 `xml:"SCORE"`
+	Rank   int     `xml:"RANK"`
+	PRank  int     `xml:"PRANK"`
+	RRank  int     `xml:"RRANK"`
+	PRRank int     `xml:"PRRANK"`
+	Points []Point `xml:"POINT"`
+}
+
+type Point struct {
+	Timestamp int64   `xml:"TIMESTAMP"`
+	Score     float32 `xml:"SCORE"`
 }
