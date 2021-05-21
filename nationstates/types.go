@@ -2,7 +2,6 @@ package nationstates
 
 import (
 	"encoding/xml"
-	"time"
 )
 
 const (
@@ -204,7 +203,7 @@ type Nation struct {
 	Consequences  Consequences `xml:"ISSUE"`
 	Issues        []Issue      `xml:"ISSUES>ISSUE"`
 	Notices       []Notice     `xml:"NOTICES>NOTICE"`
-	NextIssueTime time.Time    `xml:"NEXTISSUETIME"`
+	NextIssueTime int64        `xml:"NEXTISSUETIME"`
 }
 
 type Issue struct {
