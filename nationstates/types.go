@@ -2,6 +2,7 @@ package nationstates
 
 import (
 	"encoding/xml"
+	"time"
 )
 
 const (
@@ -198,11 +199,12 @@ var CensusLabels = map[int]string{
 }
 
 type Nation struct {
-	XMLName      xml.Name     `xml:"NATION"`
-	ID           string       `xml:"id,attr"`
-	Consequences Consequences `xml:"ISSUE"`
-	Issues       []Issue      `xml:"ISSUES>ISSUE"`
-	Notices      []Notice     `xml:"NOTICES>NOTICE"`
+	XMLName       xml.Name     `xml:"NATION"`
+	ID            string       `xml:"id,attr"`
+	Consequences  Consequences `xml:"ISSUE"`
+	Issues        []Issue      `xml:"ISSUES>ISSUE"`
+	Notices       []Notice     `xml:"NOTICES>NOTICE"`
+	NextIssueTime time.Time    `xml:"NEXTISSUETIME"`
 }
 
 type Issue struct {
