@@ -134,10 +134,6 @@ func (c *Client) CreateCensusShard(scales interface{}, modes interface{}) string
 		shard = append(shard, fmt.Sprintf("scale=%s", strings.Join(scales, "+")))
 	case string:
 		shard = append(shard, fmt.Sprintf("scale=%s", v))
-	case nil:
-		fmt.Printf("Nil: %v\n", v)
-	default:
-		fmt.Printf("Default: %v\n", v)
 	}
 
 	switch v := modes.(type) {
